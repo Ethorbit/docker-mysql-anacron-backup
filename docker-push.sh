@@ -1,4 +1,4 @@
 #!/bin/bash
 version=$(git rev-parse --short HEAD)
-docker push ethorbit/mysql-cron-backup:latest;
-docker push ethorbit/mysql-cron-backup:$version; 
+docker push ethorbit/mysql-anacron-backup:latest;
+docker push ethorbit/mysql-anacron-backup:$version;
