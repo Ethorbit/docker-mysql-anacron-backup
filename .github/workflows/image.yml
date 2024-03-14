@@ -18,9 +18,9 @@ jobs:
         run: sudo apt-get -qq update && sudo apt-get install -y devscripts shellcheck && make test
       - name: Test image
         env:
-          VOLUME_PATH: /tmp/mariadb 
+          VOLUME_PATH: ${HOME}
           DATABASE_NAME: foo
-          MARIADB_ROOT_PASSWORD: abcd 
+          MARIADB_ROOT_PASSWORD: abcd
         run: |
           docker-compose up -d mariadb
           docker-compose run backup /backup.sh
