@@ -1,47 +1,48 @@
-FROM golang:1.20.4-alpine3.18 AS binary
-RUN apk -U add openssl git
-
-ARG DOCKERIZE_VERSION=v0.7.0
-WORKDIR /go/src/github.com/jwilder
-RUN git clone https://github.com/jwilder/dockerize.git && \
-    cd dockerize && \
-    git checkout ${DOCKERIZE_VERSION}
-
-WORKDIR /go/src/github.com/jwilder/dockerize
-ENV GO111MODULE=on
-RUN go mod tidy
-RUN CGO_ENABLED=0 GOOS=linux GO111MODULE=on go build -a -o /go/bin/dockerize .
-
 FROM alpine:3.19.1
-LABEL maintainer "Fco. Javier Delgado del Hoyo <frandelhoyo@gmail.com>"
+LABEL maintainer "Ethorbit" 
+
+ARG UID=1000
+ARG GID=1000
+ARG UNAME="mysql-backup"
+ARG GNAME="mysql-backup"
+
+#CRON_TIME="0 3 * * sun" \
+ENV ANACRON_DAYS="7" \
+    ANACRON_DELAY_MINUTES="1" \
+    MYSQL_HOST="mysql" \
+    MYSQL_PORT="3306" \
+    TIMEOUT="10s" \
+    MYSQLDUMP_OPTS="--quick"
+
+WORKDIR "/home/${UNAME}"
 
 RUN apk add --update \
+        cronie \
         tzdata \
         bash \
         mysql-client \
         gzip \
         openssl \
         mariadb-connector-c && \
+    addgroup -g "${GID}" "${GNAME}" && \
+    adduser -D -G "${GNAME}" -u "${UID}" "${UNAME}" && \
+    mkdir .anacron && \
+    mkdir .anacron/etc && \
+    mkdir .anacron/spool && \
+    chown "${UNAME}":"${GNAME}" -R .anacron/ && \
+    chmod 770 -R .anacron/ && \
     rm -rf /var/cache/apk/*
 
-COPY --from=binary /go/bin/dockerize /usr/local/bin
-
-ENV CRON_TIME="0 3 * * sun" \
-    MYSQL_HOST="mysql" \
-    MYSQL_PORT="3306" \
-    TIMEOUT="10s" \
-    MYSQLDUMP_OPTS="--quick"
-
-COPY ["run.sh", "backup.sh", "restore.sh", "/delete.sh", "/"]
+COPY [ "run.sh", "backup.sh", "restore.sh", "/delete.sh", "/" ]
 RUN mkdir /backup && \
-    chmod 777 /backup && \ 
+    chmod 777 /backup && \
     chmod 755 /run.sh /backup.sh /restore.sh /delete.sh && \
     touch /mysql_backup.log && \
     chmod 666 /mysql_backup.log
 
-VOLUME ["/backup"]
+VOLUME [ "/backup", "/home/${UNAME}/.anacron/spool" ]
 
-HEALTHCHECK --interval=2s --retries=1800 \
-	CMD stat /HEALTHY.status || exit 1
+USER "${UNAME}"
 
-CMD dockerize -wait tcp://${MYSQL_HOST}:${MYSQL_PORT} -timeout ${TIMEOUT} /run.sh
+CMD [ "/run.sh" ]
+#CMD dockerize -wait tcp://${MYSQL_HOST}:${MYSQL_PORT} -timeout ${TIMEOUT} /run.sh

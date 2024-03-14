@@ -10,8 +10,11 @@ docker container run -d \
        --env MYSQL_PASS=my_password \
        --link mysql
        --volume /path/to/my/backup/folder:/backup
-       fradelg/mysql-cron-backup
+       --volume /path/to/anacron/spool:/home/mysql-backup/.anacron/spool
+       ethorbit/mysql-cron-backup
 ```
+
+The anacron spool volume is important to preserve interval progress across container instances.
 
 ### Healthcheck
 
@@ -33,7 +36,8 @@ Container is **Healthy** after the database init phase, that is after `INIT_BACK
 - `MYSQL_DATABASE_FILE`: The file in container where to find the database name(s) in your mysql database (cf. docker secrets). In that file, there can be several database names: one per line. You should use either MYSQL_DATABASE or MYSQL_DATABASE_FILE (see examples below).
 - `MYSQLDUMP_OPTS`: Command line arguments to pass to mysqldump (see [mysqldump documentation](https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html)).
 - `MYSQL_SSL_OPTS`: Command line arguments to use [SSL](https://dev.mysql.com/doc/refman/5.6/en/using-encrypted-connections.html).
-- `CRON_TIME`: The interval of cron job to run mysqldump. `0 3 * * sun` by default, which is every Sunday at 03:00. It uses UTC timezone.
+- `ANACRON_DAYS`: The interval in days to run mysqldump. `7` by default, so every week. The interval is counted even while the container is off.
+- `ANACRON_DELAY_MINUTES`: The interval in minutes after the container starts before a backup is allowed.
 - `MAX_BACKUPS`: The number of backups to keep. When reaching the limit, the old backup will be discarded. No limit by default.
 - `INIT_BACKUP`: If set, create a backup when the container starts.
 - `INIT_RESTORE_LATEST`: If set, restores latest backup.
@@ -70,14 +74,15 @@ services:
       - mariadb
     volumes:
       - ${VOLUME_PATH}/backup:/backup
+      - ${VOLUME_PATH}/anacron_spool:/home/mysql-backup/.anacron/spool
     environment:
       - MYSQL_HOST=my_mariadb
       - MYSQL_USER=root
       - MYSQL_PASS=${MARIADB_ROOT_PASSWORD}
       - MAX_BACKUPS=15
       - INIT_BACKUP=0
-      # Every day at 03:00
-      - CRON_TIME=0 3 * * *
+      # Every day
+      - ANACRON_DAYS=1
       # Make it small
       - GZIP_LEVEL=9
       # As of MySQL 8.0.21 this is needed
@@ -138,6 +143,7 @@ services:
       - mariadb
     volumes:
       - ${VOLUME_PATH}/backup:/backup
+      - ${VOLUME_PATH}/anacron_spool:/home/mysql-backup/.anacron/spool
     environment:
       - MYSQL_HOST=my_mariadb
       # Alternatively to MYSQL_USER_FILE, we can use MYSQL_USER=root to use root user instead
@@ -147,7 +153,7 @@ services:
       - MYSQL_DATABASE_FILE=/run/secrets/mysql_database
       - MAX_BACKUPS=10
       - INIT_BACKUP=1
-      - CRON_TIME=0 0 * * *
+      - ANACRON_DAYS=1
     secrets:
       - mysql_user
       - mysql_password
@@ -181,6 +187,7 @@ mysql-cron-backup:
       - mariadb
     volumes:
       - ${VOLUME_PATH}/backup:/backup
+      - ${VOLUME_PATH}/anacron_spool:/home/mysql-backup/.anacron/spool
     environment:
       - MYSQL_HOST=my_mariadb
       - MYSQL_USER=root
@@ -207,6 +214,7 @@ Set `EXIT_BACKUP` to automatic create a last backup on shutdown.
       - mariadb
     volumes:
       - ${VOLUME_PATH}/backup:/backup
+      - ${VOLUME_PATH}/anacron_spool:/home/mysql-backup/.anacron/spool
     environment:
       - MYSQL_HOST=my_mariadb
       - MYSQL_USER=${MYSQL_USER}
@@ -214,8 +222,8 @@ Set `EXIT_BACKUP` to automatic create a last backup on shutdown.
       - MAX_BACKUPS=15
       - INIT_RESTORE_LATEST=1
       - EXIT_BACKUP=1
-      # Every day at 03:00
-      - CRON_TIME=0 3 * * *
+      # Every day
+      - ANACRON_DAYS=1
       # Make it small
       - GZIP_LEVEL=9
     restart: unless-stopped

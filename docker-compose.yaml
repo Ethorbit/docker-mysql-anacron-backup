@@ -15,18 +15,19 @@ services:
 
   backup:
     build: .
-    image: fradelg/mysql-cron-backup
+    image: ethorbit/mysql-cron-backup
     depends_on:
       - mariadb
     volumes:
       - ${VOLUME_PATH}/backup:/backup
+      - ${VOLUME_PATH}/anacron_spool:/home/mysql-backup/.anacron/spool
     environment:
       - MYSQL_HOST=my_mariadb
       - MYSQL_USER=root
       - MYSQL_PASS=${MARIADB_ROOT_PASSWORD}
       - MAX_BACKUPS=1
       - INIT_BACKUP=1
-      - CRON_TIME=0 0 * * *
+      - ANACRON_DAYS=1
     restart: unless-stopped
   
 volumes: 

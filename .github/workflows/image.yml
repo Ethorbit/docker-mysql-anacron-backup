@@ -49,5 +49,5 @@ jobs:
       - name: Build multiarch image
         run: |
           docker buildx build --push \
-            --tag fradelg/mysql-cron-backup:${{ steps.docker-tag.outputs.tag }} \
+            --tag ethorbit/mysql-cron-backup:${{ steps.docker-tag.outputs.tag }} \
             --platform linux/amd64,linux/arm/v7,linux/arm64 .
