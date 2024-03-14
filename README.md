@@ -11,7 +11,7 @@ docker container run -d \
        --link mysql
        --volume /path/to/my/backup/folder:/backup
        --volume /path/to/anacron/spool:/home/mysql-backup/.anacron/spool
-       ethorbit/mysql-cron-backup
+       ethorbit/mysql-anacron-backup
 ```
 
 The anacron spool volume is important to preserve interval progress across container instances.
