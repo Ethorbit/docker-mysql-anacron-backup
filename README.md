@@ -1,6 +1,6 @@
 # mysql-anacron-backup
 
-Run mysqldump to backup your databases periodically using the cron task manager in the container. Your backups are saved in `/backup`. You can mount any directory of your host or a docker volumes in /backup. Othwerwise, a docker volume is created in the default location.
+Run mysqldump to backup your databases periodically using the anacron task manager in the container. Your backups are saved in `/backup`. You can mount any directory of your host or a docker volumes in /backup. Othwerwise, a docker volume is created in the default location.
 
 ## Usage:
 
@@ -63,8 +63,8 @@ services:
       - MYSQL_DATABASE=${DATABASE_NAME}
     restart: unless-stopped
 
-  mysql-cron-backup:
-    image: fradelg/mysql-cron-backup
+  mysql-anacron-backup:
+    image: ethorbit/mysql-anacron-backup
     depends_on:
       - mariadb
     volumes:
@@ -133,7 +133,7 @@ services:
 
   backup:
     build: .
-    image: fradelg/mysql-cron-backup
+    image: ethorbit/mysql-anacron-backup
     depends_on:
       - mariadb
     volumes:
@@ -175,8 +175,8 @@ docker container exec <your_mysql_backup_container_name> ls /backup
 To restore a database from a certain backup you may have to specify the database name in the variable MYSQL_DATABASE:
 
 ```YAML
-mysql-cron-backup:
-    image: fradelg/mysql-cron-backup
+mysql-anacron-backup:
+    image: ethorbit/mysql-anacron-backup
     command: "/restore.sh /backup/201708060500.${DATABASE_NAME}.sql.gz"
     depends_on:
       - mariadb
@@ -203,8 +203,8 @@ Set `INIT_RESTORE_LATEST` to automatic restore the last backup on startup.
 Set `EXIT_BACKUP` to automatic create a last backup on shutdown.
 
 ```yaml
-  mysql-cron-backup:
-    image: fradelg/mysql-cron-backup
+  mysql-anacron-backup:
+    image: ethorbit/mysql-anacron-backup
     depends_on:
       - mariadb
     volumes:
