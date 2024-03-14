@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@v4
+      - name: Set Permissions
+        run: sudo mkdir /tmp/mariadb && sudo chown 1000:1000 /tmp/mariadb && sudo chmod 770 /tmp/mariadb
       - name: Test Bash scripts
         run: sudo apt-get -qq update && sudo apt-get install -y devscripts shellcheck && make test
       - name: Test image
