@@ -16,11 +16,6 @@ docker container run -d \
 
 The anacron spool volume is important to preserve interval progress across container instances.
 
-### Healthcheck
-
-
-Healthcheck is provided as a basic init control.
-Container is **Healthy** after the database init phase, that is after `INIT_BACKUP` or `INIT_RESTORE_LATEST` happends without check if there is an error, **Starting** otherwise. Not other checks are actually provided.
 
 ## Variables
 
@@ -36,13 +31,13 @@ Container is **Healthy** after the database init phase, that is after `INIT_BACK
 - `MYSQL_DATABASE_FILE`: The file in container where to find the database name(s) in your mysql database (cf. docker secrets). In that file, there can be several database names: one per line. You should use either MYSQL_DATABASE or MYSQL_DATABASE_FILE (see examples below).
 - `MYSQLDUMP_OPTS`: Command line arguments to pass to mysqldump (see [mysqldump documentation](https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html)).
 - `MYSQL_SSL_OPTS`: Command line arguments to use [SSL](https://dev.mysql.com/doc/refman/5.6/en/using-encrypted-connections.html).
-- `ANACRON_DAYS`: The interval in days to run mysqldump. `7` by default, so every week. The interval is counted even while the container is off.
+- `ANACRON_DAYS`: The interval in days to run mysqldump. `7` by default, so every week. The interval is counted down even while the container / host is off.
 - `ANACRON_DELAY_MINUTES`: The interval in minutes after the container starts before a backup is allowed.
+- `ANACRON_CHECK_DELAY`: The interval to check if it's time to do an anacron backup yet. `60m` by default.
 - `MAX_BACKUPS`: The number of backups to keep. When reaching the limit, the old backup will be discarded. No limit by default.
-- `INIT_BACKUP`: If set, create a backup when the container starts.
 - `INIT_RESTORE_LATEST`: If set, restores latest backup.
 - `EXIT_BACKUP`: If set, create a backup when the container stops.
-- `TIMEOUT`: Wait a given number of seconds for the database to be ready and make the first backup, `10s` by default. After that time, the initial attempt for backup gives up and only the Cron job will try to make a backup.
+- `TIMEOUT`: Wait a given number of seconds for the database connection to be ready (`10s` by default) before checking if a backup should be made (checked on start and on every `ANACRON_CHECK_DELAY`). After that time, if no connection can be made still, the container closes with failure.
 - `GZIP_LEVEL`: Specify the level of gzip compression from 1 (quickest, least compressed) to 9 (slowest, most compressed), default is 6.
 - `USE_PLAIN_SQL`: If set, back up and restore plain SQL files without gzip.
 - `TZ`: Specify TIMEZONE in Container. E.g. "Europe/Berlin". Default is UTC.

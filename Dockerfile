@@ -6,9 +6,10 @@ ARG GID=1000
 ARG UNAME="mysql-backup"
 ARG GNAME="mysql-backup"
 
-#CRON_TIME="0 3 * * sun" \
-ENV ANACRON_DAYS="7" \
+ENV INIT_BACKUP=1 \
+    ANACRON_DAYS="7" \
     ANACRON_DELAY_MINUTES="1" \
+    ANACRON_CHECK_DELAY="60m" \
     MYSQL_HOST="mysql" \
     MYSQL_PORT="3306" \
     TIMEOUT="10s" \
@@ -33,10 +34,10 @@ RUN apk add --update \
     chmod 770 -R .anacron/ && \
     rm -rf /var/cache/apk/*
 
-COPY [ "run.sh", "backup.sh", "restore.sh", "/delete.sh", "/" ]
+COPY [ "wait.sh", "run.sh", "backup.sh", "restore.sh", "/delete.sh", "/" ]
 RUN mkdir /backup && \
     chmod 777 /backup && \
-    chmod 755 /run.sh /backup.sh /restore.sh /delete.sh && \
+    chmod 755 /wait.sh /run.sh /backup.sh /restore.sh /delete.sh && \
     touch /mysql_backup.log && \
     chmod 666 /mysql_backup.log
 
@@ -45,4 +46,3 @@ VOLUME [ "/backup", "/home/${UNAME}/.anacron/spool" ]
 USER "${UNAME}"
 
 CMD [ "/run.sh" ]
-#CMD dockerize -wait tcp://${MYSQL_HOST}:${MYSQL_PORT} -timeout ${TIMEOUT} /run.sh
