@@ -1,4 +1,5 @@
 #!/bin/bash
+umask 117
 
 # Get hostname: try read from file, else get from env
 [ -z "${MYSQL_HOST_FILE}" ] || { MYSQL_HOST=$(head -1 "${MYSQL_HOST_FILE}"); }
